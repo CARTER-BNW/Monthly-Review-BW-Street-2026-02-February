@@ -139,16 +139,16 @@ FEB 2026 – Black & White Street - Monthly Review
 <script>
 $(document).ready(function(){
 
-    const totalImages = 49;
+    const totalImages = 71;
     const flipbook = $('#flipbook');
     const timeline = $('#timeline');
 
     // Build pages & timeline
     for(let i=1;i<=totalImages;i++){
         let num = i.toString().padStart(4,'0');
-        let page = $('<div class="page"><img src="jan26-'+num+'.jpg"></div>');
+        let page = $('<div class="page"><img src="feb26-'+num+'.jpg"></div>');
         flipbook.append(page);
-        let thumb = $('<img src="jan26-'+num+'.jpg" data-page="'+i+'">');
+        let thumb = $('<img src="feb26-'+num+'.jpg" data-page="'+i+'">');
         timeline.append(thumb);
     }
 
