@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FEB 2026 BNW Street Review – Flipbook</title>
+
+<script src="extras/jquery.min.1.7.js"></script>
+<script src="extras/jquery.mousewheel.min.js"></script>
+<script src="lib/turn.min.js"></script>
+
+<style>
+
+body{
+    background:#222;
+    margin:0;
+    font-family:sans-serif;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+/* logo */
+#logo{
+    height:180px;
+    margin-top:20px;
+}
+
+/* title */
+#title{
+    font-size:42px;
+    margin:10px 0 25px 0;
+    text-align:center;
+}
+
+/* flipbook */
+#flipbook{
+    width:96vw;
+    max-width:1400px;
+    background:#222;
+}
+
+/* page */
+#flipbook .page{
+    background:#222;
+    box-shadow:0 0 20px rgba(0,0,0,0.5);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* images */
+#flipbook img{
+    width:100%;
+    height:auto;
+    max-height:100%;
+    display:block;
+    cursor:pointer;
+    object-fit:contain;
+}
+
+/* controls */
+#controls{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:30px;
+    margin:25px 0;
+}
+
+#controls a,
+#controls button{
+    color:white;
+    text-decoration:none;
+    background:#333;
+    border:none;
+    padding:16px 28px;
+    cursor:pointer;
+    font-size:30px;
+    border-radius:6px;
+}
+
+/* timeline */
+#timeline{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:15px;
+    gap:8px;
+    max-width:96vw;
+}
+
+#timeline img{
+    width:190px;
+    height:260px;
+    object-fit:cover;
+    cursor:pointer;
+    border:3px solid transparent;
+}
+
+#timeline img.active{
+    border-color:#fff;
+}
+
+/* fullscreen adjustments */
+:fullscreen #flipbook .page,
+:fullscreen #flipbook img{
+    width: auto;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+</style>
+</head>
+
+<body>
+
+<img id="logo" src="logo.png">
+
+<div id="title">
+FEB 2026 – Black & White Street - Monthly Review
+</div>
+
+<div id="flipbook"></div>
+
+<div id="controls">
+<a href="https://www.instagram.com/carter.bnw/" target="_blank">Instagram</a>
+<button id="prev">Prev</button>
+<button id="next">Next</button>
+<a href="https://www.paypal.com/donate/?hosted_button_id=MJLDZJNTTNYCA" target="_blank">Donate / Support</a>
+</div>
+
+<div id="timeline"></div>
+
+<script>
+$(document).ready(function(){
+
+    const totalImages = 49;
+    const flipbook = $('#flipbook');
+    const timeline = $('#timeline');
+
+    // Build pages & timeline
+    for(let i=1;i<=totalImages;i++){
+        let num = i.toString().padStart(4,'0');
+        let page = $('<div class="page"><img src="jan26-'+num+'.jpg"></div>');
+        flipbook.append(page);
+        let thumb = $('<img src="jan26-'+num+'.jpg" data-page="'+i+'">');
+        timeline.append(thumb);
+    }
+
+    // Initialize flipbook
+    flipbook.turn({
+        width: flipbook.width(),
+        height: 800,
+        autoCenter: true,
+        display: 'single',
+        acceleration: true,
+        gradients: true,
+        elevation: 50
+    });
+
+    // Resize function
+    function resizeFlipbook(){
+        let fullscreen = !!document.fullscreenElement;
+        let pageIndex = flipbook.turn('page')-1;
+        let img = $('#flipbook img').eq(pageIndex)[0];
+        if(!img || !img.naturalWidth) return;
+
+        let pageWidth = fullscreen ? window.innerWidth : flipbook.width();
+        let pageHeight = fullscreen ? window.innerHeight : img.naturalHeight * (pageWidth / img.naturalWidth);
+
+        flipbook.turn('size', pageWidth, pageHeight);
+
+        $('#flipbook .page').css({
+            height: pageHeight+'px',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center'
+        });
+
+        flipbook.turn('resize');
+    }
+
+    // Call resize when images load
+    $('#flipbook img').on('load', resizeFlipbook);
+    $(window).resize(resizeFlipbook);
+    document.addEventListener("fullscreenchange", function(){ setTimeout(resizeFlipbook,50); });
+
+    // Controls
+    $('#next').click(()=>flipbook.turn('next'));
+    $('#prev').click(()=>flipbook.turn('previous'));
+    $(document).keydown(function(e){
+        if(e.keyCode===37) flipbook.turn('previous');
+        if(e.keyCode===39) flipbook.turn('next');
+    });
+
+    // Touch swipe
+    let startX=null;
+    flipbook.on('touchstart',function(e){ startX=e.originalEvent.touches[0].clientX; });
+    flipbook.on('touchmove',function(e){
+        if(!startX) return;
+        let diff=e.originalEvent.touches[0].clientX-startX;
+        if(diff>50){ flipbook.turn('previous'); startX=null; }
+        if(diff<-50){ flipbook.turn('next'); startX=null; }
+    });
+    flipbook.on('touchend',function(){ startX=null; });
+
+    // Timeline click
+    $('#timeline img').click(function(){
+        let pageNum=$(this).data('page');
+        flipbook.turn('page',pageNum);
+    });
+
+    // Update timeline & resize on page turn
+    flipbook.bind('turned',function(e,page){
+        $('#timeline img').removeClass('active');
+        $('#timeline img').eq(page-1).addClass('active');
+        resizeFlipbook();
+    });
+
+    flipbook.turn('page',1);
+
+    // Fullscreen toggle
+    $('#flipbook').on('click','img',function(){
+        let el=document.getElementById("flipbook");
+        if(!document.fullscreenElement){
+            if(el.requestFullscreen) el.requestFullscreen();
+            else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if(el.msRequestFullscreen) el.msRequestFullscreen();
+        }else{
+            if(document.exitFullscreen) document.exitFullscreen();
+        }
+    });
+
+});
+</script>
+
+</body>
+</html>
